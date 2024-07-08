@@ -1,5 +1,11 @@
 import ansiEscapes from "ansi-escapes";
+import { randomInt } from "crypto";
 import readline from "readline";
+
+const title = "Nuclear Launch Sequence Initiated";
+const prompt = "Enter Launch Code: ";
+const getCurrentLaunchCode = () => randomInt(10000);
+let progress = 0;
 
 class TerminalManager {
   constructor() {
@@ -17,8 +23,10 @@ class TerminalManager {
   }
 
   setCursorToEnd() {
-    const lines = this.contents.split("\n").length;
-    process.stdout.write(ansiEscapes.cursorTo(0, lines - 1));
+    const lines = this.contents.split("\n");
+    process.stdout.write(
+      ansiEscapes.cursorTo(lines[lines.length - 1].length, lines.length - 1)
+    );
   }
 
   update(contents) {
@@ -59,6 +67,19 @@ class TerminalManager {
     )}`;
   }
 }
+const timeManager = {
+  startTime: Date.now(),
+  getElapsedTime: () => {
+    const elapsedMs = Date.now() - this.startTime;
+    const seconds = Math.floor(elapsedMs / 1000) % 60;
+    const minutes = Math.floor(elapsedMs / (1000 * 60)) % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0"
+    )}`;
+  },
+  resetStartTime: () => (startTime = Date.now()),
+};
 
 // Progress bar function
 function getProgressBar(progress) {
@@ -79,14 +100,8 @@ function getProgressBar(progress) {
 // Example usage
 const terminalManager = new TerminalManager();
 
-let progress = 0;
-function getContent() {
-  const progressBar = getProgressBar(progress);
-  const elapsedTime = terminalManager.getElapsedTime();
-  progress += 0.01;
-  if (progress > 1) progress = 0;
-
-  return `Nuclear Launch Initiated\nElapsed Time: ${elapsedTime}\n\n${progressBar}\nCurrent Launch Code: XBYY\nEnter Launch Codes: `;
+function getContent(title, elapsedTime, progressBar, dynamicContent, prompt) {
+  return `${title}\nElapsed Time: ${elapsedTime}\n\n${progressBar}\n${dynamicContent}\n${prompt}`;
 }
 
 function handleInput(input) {
@@ -97,5 +112,17 @@ function handleInput(input) {
   console.log(`Received Launch Code: ${input}`);
 }
 
-terminalManager.startIntervalUpdate(100, getContent);
-terminalManager.listenForInput("Enter Launch Codes: ", handleInput);
+function main() {
+  let launchCode = getCurrentLaunchCode();
+  terminalManager.startIntervalUpdate(100, () =>
+    getContent(
+      title,
+      terminalManager.getElapsedTime(),
+      getProgressBar(progress),
+      `Current Launch Code is ${launchCode}`,
+      prompt
+    )
+  );
+  terminalManager.listenForInput("", handleInput);
+}
+main();
