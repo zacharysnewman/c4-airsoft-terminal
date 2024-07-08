@@ -1,10 +1,7 @@
-import audioPlayer from "./AudioPlayer.js";
+import audioPlayer from "./src/AudioPlayer.js";
 
-// Play an audio file with a callback
-audioPlayer.play("tenMinutes.m4a", (err) => {
-  if (err) {
-    console.error("Error:", err);
-  } else {
-    console.log("Playback finished successfully.");
-  }
-});
+async function main() {
+  await audioPlayer.play("audio/tenMinutes.mp3");
+}
+
+main().then(() => console.log("-- END OF LINE --"));

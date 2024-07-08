@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node ./bomb.js",
-    "audio": "node ./audioTest.js"
+    "audio:test": "node ./audioTest.js"
   },
   "author": "",
   "license": "ISC",

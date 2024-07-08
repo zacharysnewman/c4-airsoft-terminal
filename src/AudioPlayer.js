@@ -6,7 +6,7 @@ class AudioPlayer {
     this.isPlaying = false;
   }
 
-  play(filePath, callback) {
+  async play(filePath) {
     if (this.isPlaying) {
       console.log("Already playing an audio file.");
       return;
@@ -17,19 +17,20 @@ class AudioPlayer {
     const fullPath = path.resolve(filePath);
 
     // Play command varies based on OS
-    const playCommand = process.platform === "win32" ? "start" : "afplay";
+    const playCommand = process.platform === "win32" ? `start /min` : "afplay";
 
-    // Execute the play command with the audio file path
-    exec(`${playCommand} "${fullPath}"`, (error, stdout, stderr) => {
-      this.isPlaying = false;
+    return new Promise((resolve, reject) => {
+      exec(`${playCommand} "${fullPath}"`, (error, stdout, stderr) => {
+        this.isPlaying = false;
 
-      if (error) {
-        console.error(`Error playing audio: ${stderr}`);
-        if (callback) callback(error);
-      } else {
-        console.log("Audio playback finished.");
-        if (callback) callback(null);
-      }
+        if (error) {
+          console.error(`Error playing audio: ${stderr}`);
+          reject(error);
+        } else {
+          console.log("Audio playback finished.");
+          resolve();
+        }
+      });
     });
   }
 }
