@@ -1,4 +1,4 @@
-# C4 Airsoft Game
+# C4 Airsoft Terminal
 
 ## Setup
 
