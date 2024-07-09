@@ -1,45 +1,36 @@
 # C4 - Airsoft Terminal
 
-## Setup
+## Computer Setup (Global dependencies)
 
 ### Windows
 
-1. **Install NVM for Windows:**
+1. **Install NVM:**
 
-   - Download the NVM for Windows installer from the [nvm-windows releases page](https://github.com/coreybutler/nvm-windows/releases).
-   - Run the installer and follow the installation steps.
-
-2. **Check Default Directory:**
-
-   - Open Command Prompt (cmd) or PowerShell.
-   - Ensure you are in the default root directory where NVM will install Node.js. You can check this by running:
+   - Open Command Prompt.
+   - Download and run the NVM installation script for Windows from [GitHub](https://github.com/coreybutler/nvm-windows/releases):
      ```sh
-     cd %USERPROFILE%
+     nvm-setup.zip
      ```
+   - Follow the installation instructions provided.
 
-3. **Install Node.js using NVM:**
+2. **Install Node.js using NVM:**
 
-   - Continue in Command Prompt (cmd) or PowerShell.
-   - Run the following commands:
+   - Continue in Command Prompt.
+   - Install the latest version of Node.js:
      ```sh
      nvm install latest
+     ```
+   - Use the installed version:
+     ```sh
      nvm use latest
      ```
 
-4. **Verify Installation:**
-
+3. **Verify Installation:**
    - Ensure `nvm`, `node`, and `npm` are installed correctly:
      ```sh
      nvm version
      node -v
      npm -v
-     ```
-
-5. **Install Project Dependencies:**
-   - Navigate to the project directory and install dependencies:
-     ```sh
-     cd path/to/project
-     npm ci
      ```
 
 ### macOS
@@ -96,13 +87,14 @@
      ```
 
 5. **Verify Installation:**
-
    - Ensure `nvm`, `node`, and `npm` are installed correctly:
      ```sh
      nvm --version
      node -v
      npm -v
      ```
+
+## Project Setup (Project-specific dependencies)
 
 6. **Install Project Dependencies:**
    - Navigate to the project directory and install dependencies:
