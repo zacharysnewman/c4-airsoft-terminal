@@ -1,4 +1,4 @@
-# C4
+# C4 Airsoft Game
 
 ## Setup
 
