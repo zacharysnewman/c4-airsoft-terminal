@@ -2,11 +2,12 @@ import { exec } from "child_process";
 import path from "path";
 
 class AudioPlayer {
+  isPlaying: boolean;
   constructor() {
     this.isPlaying = false;
   }
 
-  async play(filePath) {
+  async play(filePath: string) {
     if (this.isPlaying) {
       console.log("Already playing an audio file.");
       return;
@@ -19,7 +20,7 @@ class AudioPlayer {
     // Play command varies based on OS
     const playCommand = process.platform === "win32" ? `start /min` : "afplay";
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       exec(`${playCommand} "${fullPath}"`, (error, stdout, stderr) => {
         this.isPlaying = false;
 
@@ -27,7 +28,7 @@ class AudioPlayer {
           console.error(`Error playing audio: ${stderr}`);
           reject(error);
         } else {
-          console.log("Audio playback finished.");
+          // console.log("Audio playback finished.");
           resolve();
         }
       });
