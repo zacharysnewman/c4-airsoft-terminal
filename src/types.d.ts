@@ -7,6 +7,9 @@ export interface GameModeParams {
   getAcceptedCodes: () => string[];
   getCurrentCode: () => number;
   getLastCodeResult: () => CodeResult;
+  pregameTimerKey: string;
+  overallTimerKey: string;
+  ingameTimerKey: string;
 }
 
 interface ConditionConfig {

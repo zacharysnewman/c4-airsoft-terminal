@@ -7,14 +7,21 @@ import {
 } from "./src/utils.js";
 import { TerminalManager } from "./src/TerminalManager.js";
 import { TimeManager } from "./src/TimeManager.js";
-import { GameModeConfig, getGamemodes } from "./src/gamemodes.js";
+import {
+  GameModeConfig,
+  dynamicDisplayRefreshRateMs,
+  getGamemodes,
+} from "./src/gamemodes.js";
 import { CodeResult, GameModeParams } from "./src/types.js";
 import AudioPlayer from "./src/AudioPlayer.js";
 
 // Press "enter" this # times to access gamemode selection (after finishing a game)
 const pressToShowGamemodeSelectCount = 10;
 
-const terminalManager = new TerminalManager();
+const pregameTimerKey = "pregame";
+const overallTimerKey = "overall";
+const ingameTimerKey = "ingame";
+const terminalManager = new TerminalManager(dynamicDisplayRefreshRateMs);
 const timeManager = new TimeManager();
 const getCurrentCode = () => randomInt(10000); // TODO: Should be implemented separately and configured in gamemodes
 let currentCode: number;
@@ -30,6 +37,9 @@ const gamemodeParams: GameModeParams = {
   getAcceptedCodes: () => acceptedCodes,
   getCurrentCode: () => currentCode,
   getLastCodeResult: () => lastCodeResult,
+  pregameTimerKey,
+  overallTimerKey,
+  ingameTimerKey,
 };
 
 const handleRawInput =
@@ -70,23 +80,35 @@ const resetGameState = () => {
 };
 
 async function runGamemode(gamemode: GameModeConfig) {
+  // Pregame
+  timeManager.startTimer(pregameTimerKey, gamemode.pregameTimeLimitSeconds);
+
+  const displayPregameTimerIntervalId = terminalManager.displayDynamicContent(
+    () =>
+      `Pregame Timer: ${timeManager.getTimeRemainingFormatted(pregameTimerKey)}`
+  );
+
+  await waitForCondition(() => timeManager.isTimerEnded(pregameTimerKey));
+  clearInterval(displayPregameTimerIntervalId);
   terminalManager.clearTerminal();
+
+  // Game Started
+  // Need to display timer and prompt, then start timer and update
+  await terminalManager.type(
+    `Time remaining: ${timeManager.getTimeRemainingFormatted(
+      overallTimerKey
+    )}\n` + gamemode.start.message()
+  );
   await displayPrompt(gamemode.start.message());
-
   terminalManager.clearTerminal();
-  timeManager.resetStartTime(gamemode.timeLimitMinutes);
 
-  /* \/ Disable to speed up testing \/ */
   const activelyTypingDisplay = terminalManager.type(gamemode.display());
   await pause(1000);
   AudioPlayer.play(gamemode.start.audioPath);
   await activelyTypingDisplay;
-  /* /\ Disable to speed up testing /\ */
 
-  timeManager.resetStartTime(gamemode.timeLimitMinutes);
-
+  // Objective Phase
   const displayIntervalId = terminalManager.displayDynamicContent(
-    100,
     gamemode.display
   );
   terminalManager.listenForRawInput(handleRawInput(gamemode));
@@ -97,10 +119,10 @@ async function runGamemode(gamemode: GameModeConfig) {
       gamemode.team2Win.condition() ||
       gamemode.tie.condition()
   );
-
   terminalManager.stopListeningForRawInput();
   clearInterval(displayIntervalId);
 
+  // Game End
   let winCondition = undefined;
   if (gamemode.team1Win.condition()) {
     winCondition = gamemode.team1Win;

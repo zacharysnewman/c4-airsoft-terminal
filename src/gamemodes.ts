@@ -1,9 +1,13 @@
 import { getProgressBar } from "./progressBar.js";
 import { ConditionConfig, GameModeParams } from "./types.js";
 
+export const dynamicDisplayRefreshRateMs = 100;
+
 export interface GameModeConfig {
   gameModeName: string;
-  timeLimitMinutes: number;
+  pregameTimeLimitSeconds: number;
+  overallTimeLimitSeconds: number;
+  objectiveTimeLimitSeconds: number;
   display: () => string;
   start: ConditionConfig;
   team1Win: ConditionConfig;
@@ -23,10 +27,15 @@ export const getGamemodes = ({
   getAcceptedCodes,
   getCurrentCode,
   getLastCodeResult,
+  pregameTimerKey,
+  overallTimerKey,
+  ingameTimerKey,
 }: GameModeParams): GameModeConfig[] => [
   {
     gameModeName: "Nuclear Launch Sequence",
-    timeLimitMinutes: 10,
+    pregameTimeLimitSeconds: 0,
+    overallTimeLimitSeconds: 20 * 60,
+    objectiveTimeLimitSeconds: 2 * 60,
     start: {
       condition: () => false,
       message: () => "Initiate Nuclear ICBM Launch Sequence? ",
@@ -37,7 +46,9 @@ export const getGamemodes = ({
         `Nuclear ICBM launch sequence initiated...`,
         `Target acquired: Washington state`,
         `Launch codes requested...`,
-        `Time remaining: ${getTimeManager().getTimeRemainingFormatted()}`,
+        `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+          overallTimerKey
+        )}`,
         ``,
         `Accepted codes: ${getAcceptedCodes().join(", ")}`,
         `${getProgressBar(getCurrentProgressToObjective())}`,
@@ -57,7 +68,7 @@ export const getGamemodes = ({
       audioPath: "audio/SuccessLaunch.mp3",
     },
     team2Win: {
-      condition: () => getTimeManager().getTimeRemaining() <= 0,
+      condition: () => getTimeManager().isTimerEnded(overallTimerKey),
       message: () =>
         [
           "Time expired...",
@@ -74,41 +85,6 @@ export const getGamemodes = ({
       audioPath: "",
     },
   },
-  {
-    gameModeName: "Search and Destroy",
-    timeLimitMinutes: 10,
-    start: {
-      condition: () => false,
-      message: () => "Initiate Nuclear ICBM Launch Sequence? ",
-      audioPath: "audio/StartLaunch.mp3",
-    },
-    display: () =>
-      [
-        `Nuclear ICBM launch sequence initiated...`,
-        `Target acquired: Washington state`,
-        `Launch codes requested...`,
-        `Time remaining: ${getTimeManager().getTimeRemainingFormatted()}`,
-        ``,
-        `Accepted codes: ${getAcceptedCodes().join(", ")}`,
-        `${getProgressBar(getCurrentProgressToObjective())}`,
-        `Current launch code is ${getCurrentCode()}`,
-        `(${getLastCodeResult()}) Enter launch code: ${getUserInput()}`,
-      ].join("\n"),
-    team1Win: {
-      condition: () => getCurrentProgressToObjective() >= 1,
-      message: () => "",
-      audioPath: "audio/SuccessLaunch.mp3",
-    },
-    team2Win: {
-      condition: () => getTimeManager().getTimeRemaining() <= 0,
-      message: () => "",
-      audioPath: "audio/FailureLaunch.mp3",
-    },
-    tie: {
-      condition: () => false,
-      message: () => "",
-      audioPath: "",
-    },
-  },
+  { gameModeName: "SnD" } as GameModeConfig,
   { gameModeName: "Tug of War" } as GameModeConfig,
 ];

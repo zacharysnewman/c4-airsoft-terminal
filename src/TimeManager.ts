@@ -1,45 +1,97 @@
-import { formatTime } from "./utils.js";
+import { formatTime, pause, waitForCondition } from "./utils.js";
+
+type Timer = {
+  startTime: number;
+  timeLimit: number;
+  isRunning: boolean;
+  stoppedTime?: number; // Separate property for storing stopped time
+};
 
 export class TimeManager {
-  private startTime: number;
-  private timeLimitMinutes: number;
+  private timers: Map<string, Timer>;
 
   constructor() {
-    this.startTime = Date.now();
-    this.timeLimitMinutes = 0;
+    this.timers = new Map<string, Timer>();
   }
 
-  getElapsedTimeMs(): number {
-    return Date.now() - this.startTime;
+  startTimer(name: string, timeLimitSeconds: number): void {
+    const currentTime = Date.now();
+    this.timers.set(name, {
+      startTime: currentTime,
+      timeLimit: timeLimitSeconds * 1000, // Convert seconds to milliseconds
+      isRunning: true,
+    });
   }
 
-  getElapsedTimeInSeconds(): number {
-    return this.getElapsedTimeMs() / 1000;
+  stopTimer(name: string): void {
+    const timer = this.timers.get(name);
+    if (timer && timer.isRunning) {
+      timer.isRunning = false;
+      timer.stoppedTime = Date.now(); // Store the current time as stopped time
+    }
   }
 
-  getElapsedTimeInMinutes(): number {
-    return this.getElapsedTimeInSeconds() / 60;
+  getElapsedTimeMs(name: string): number {
+    const timer = this.timers.get(name);
+    if (!timer) return 0;
+    return Date.now() - timer.startTime;
   }
 
-  getElapsedTimeFormatted(): string {
-    return formatTime(this.getElapsedTimeMs());
+  getElapsedTimeInSeconds(name: string): number {
+    return this.getElapsedTimeMs(name) / 1000;
   }
 
-  getEndTime() {
-    return this.startTime + this.timeLimitMinutes * 60 * 1000;
+  getElapsedTimeInMinutes(name: string): number {
+    return this.getElapsedTimeInSeconds(name) / 60;
   }
 
-  getTimeRemaining() {
-    const endTime = this.getEndTime();
-    return endTime - Date.now();
+  getElapsedTimeFormatted(name: string): string {
+    return formatTime(this.getElapsedTimeMs(name));
   }
 
-  getTimeRemainingFormatted() {
-    return formatTime(this.getTimeRemaining());
+  getEndTime(name: string): number {
+    const timer = this.timers.get(name);
+    if (!timer) return 0;
+    return timer.startTime + timer.timeLimit;
   }
 
-  resetStartTime(timeLimitMinutes: number): void {
-    this.startTime = Date.now();
-    this.timeLimitMinutes = timeLimitMinutes;
+  getTimeRemaining(name: string): number {
+    const timer = this.timers.get(name);
+    if (!timer) return 0;
+    if (!timer.isRunning) {
+      // Calculate remaining time based on stopped time if timer is not running
+      const elapsedTime = timer.stoppedTime
+        ? timer.stoppedTime - timer.startTime
+        : 0;
+      return Math.max(timer.timeLimit - elapsedTime, 0); // Ensure time remaining is not negative
+    }
+    const endTime = this.getEndTime(name);
+    const timeRemaining = endTime - Date.now();
+    return timeRemaining > 0 ? timeRemaining : 0;
+  }
+
+  getTimeRemainingFormatted(name: string): string {
+    return formatTime(this.getTimeRemaining(name));
+  }
+
+  resetStartTime(name: string, timeLimitSeconds: number): void {
+    const currentTime = Date.now();
+    this.timers.set(name, {
+      startTime: currentTime,
+      timeLimit: timeLimitSeconds * 1000, // Convert seconds to milliseconds
+      isRunning: true,
+    });
+  }
+
+  clearTimer(name: string): void {
+    this.timers.delete(name);
+  }
+
+  isTimerEnded(name: string): boolean {
+    const timer = this.timers.get(name);
+    if (!timer) return false;
+    if (!timer.isRunning) return true;
+    const endTime = this.getEndTime(name);
+    return Date.now() >= endTime;
   }
 }

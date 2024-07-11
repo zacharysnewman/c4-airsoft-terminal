@@ -8,10 +8,12 @@ export class TerminalManager {
   private keypressListener:
     | ((char: string, key: { name: string; sequence: string }) => void)
     | null = null;
+  private dynamicDisplayRefreshRateMs: number;
 
-  constructor() {
+  constructor(dynamicDisplayRefreshRateMs: number) {
     this.lineCount = 0;
     this.lastLineLength = 0;
+    this.dynamicDisplayRefreshRateMs = dynamicDisplayRefreshRateMs;
   }
 
   clearTerminal() {
@@ -43,11 +45,11 @@ export class TerminalManager {
     }
   }
 
-  displayDynamicContent(updateInterval: number, getOutput: () => string) {
+  displayDynamicContent(getOutput: () => string) {
     const intervalId = setInterval(() => {
       const newContent = getOutput();
       this.update(newContent);
-    }, updateInterval);
+    }, this.dynamicDisplayRefreshRateMs);
     return intervalId;
   }
 
