@@ -4,8 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "tsx app.ts",
-    "audio:test": "tsx audioTest.ts"
+    "start": "tsx app.ts"
   },
   "keywords": [],
   "author": "",
