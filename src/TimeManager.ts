@@ -1,4 +1,4 @@
-import { formatTime, pause, waitForCondition } from "./utils.js";
+import { formatTime } from "./utils.js";
 
 type Timer = {
   startTime: number;
@@ -14,13 +14,22 @@ export class TimeManager {
     this.timers = new Map<string, Timer>();
   }
 
-  startTimer(name: string, timeLimitSeconds: number): void {
+  setTimer(name: string, timeLimitSeconds: number): void {
     const currentTime = Date.now();
     this.timers.set(name, {
       startTime: currentTime,
       timeLimit: timeLimitSeconds * 1000, // Convert seconds to milliseconds
-      isRunning: true,
+      isRunning: false, // Timer is set but not started yet
     });
+  }
+
+  startTimer(name: string): void {
+    const timer = this.timers.get(name);
+    const currentTime = Date.now();
+    if (timer) {
+      timer.isRunning = true;
+      timer.startTime = currentTime;
+    }
   }
 
   stopTimer(name: string): void {

@@ -9,20 +9,26 @@ export function pause(durationMs: number) {
   return new Promise((resolve) => setTimeout(resolve, durationMs));
 }
 
-const pauseTimeNonNewline = 50; // 500ms for non-newline characters
-const pauseTimeNewline = 400; // 1000ms for newline characters
+const pauseTimeNonNewlineMs = 50;
+const pauseTimeNewlineMs = 400;
 
-export async function* stringIterator(input: string) {
+export async function* stringIterator(
+  inputFn: () => string,
+  skipLines: number = 0
+) {
   let currentString = "";
 
-  for (const char of input) {
-    currentString += char;
+  for (let i = 0; i < inputFn().length; i++) {
+    const inputString = inputFn();
+    currentString = inputString.slice(0, i);
+
     yield currentString;
 
+    const char = inputString[i];
     if (char === "\n") {
-      await pause(pauseTimeNewline);
+      await pause(pauseTimeNewlineMs);
     } else if (!/\s/.test(char)) {
-      await pause(pauseTimeNonNewline);
+      await pause(pauseTimeNonNewlineMs);
     }
   }
 }

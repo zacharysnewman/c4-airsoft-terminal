@@ -1,18 +1,22 @@
 import { getProgressBar } from "./progressBar.js";
 import { ConditionConfig, GameModeParams } from "./types.js";
 
-export const dynamicDisplayRefreshRateMs = 100;
+export const dynamicDisplayRefreshRateMs = 500;
 
 export interface GameModeConfig {
   gameModeName: string;
   pregameTimeLimitSeconds: number;
   overallTimeLimitSeconds: number;
   objectiveTimeLimitSeconds: number;
-  display: () => string;
+  pregameTimerMessage: () => string;
   start: ConditionConfig;
+  display: () => string;
   team1Win: ConditionConfig;
   team2Win: ConditionConfig;
   tie: ConditionConfig;
+  // conditionalAudio[]
+  // codeCount
+  // codeCharacters
 }
 
 // Pre game timer
@@ -36,19 +40,29 @@ export const getGamemodes = ({
     pregameTimeLimitSeconds: 0,
     overallTimeLimitSeconds: 20 * 60,
     objectiveTimeLimitSeconds: 2 * 60,
+    pregameTimerMessage: () =>
+      `Pregame Timer: ${getTimeManager().getTimeRemainingFormatted(
+        pregameTimerKey
+      )}`,
     start: {
       condition: () => false,
-      message: () => "Initiate Nuclear ICBM Launch Sequence? ",
+      message: () =>
+        [
+          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+            overallTimerKey
+          )}`,
+          "Initiate Nuclear ICBM Launch Sequence? ",
+        ].join("\n"),
       audioPath: "audio/StartLaunch.mp3",
     },
     display: () =>
       [
-        `Nuclear ICBM launch sequence initiated...`,
-        `Target acquired: Washington state`,
-        `Launch codes requested...`,
         `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
           overallTimerKey
         )}`,
+        `Nuclear ICBM launch sequence initiated...`,
+        `Target acquired: Washington state`,
+        `Launch codes requested...`,
         ``,
         `Accepted codes: ${getAcceptedCodes().join(", ")}`,
         `${getProgressBar(getCurrentProgressToObjective())}`,
@@ -63,7 +77,7 @@ export const getGamemodes = ({
           "Nuclear ICBM launched...",
           "Goodbye Washington and good luck...",
           "Attackers win!",
-          "",
+          "\n",
         ].join("\n"),
       audioPath: "audio/SuccessLaunch.mp3",
     },
@@ -75,7 +89,7 @@ export const getGamemodes = ({
           "Launch sequence terminated...",
           "Washington thanks you...",
           "Defenders win!",
-          "",
+          "\n",
         ].join("\n"),
       audioPath: "audio/FailureLaunch.mp3",
     },

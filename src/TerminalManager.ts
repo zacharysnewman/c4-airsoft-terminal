@@ -39,8 +39,9 @@ export class TerminalManager {
     this.setCursorToEnd();
   }
 
-  async type(input: string) {
-    for await (const partialString of stringIterator(input)) {
+  async type(inputFn: () => string, skipLines: number = 0) {
+    let i = skipLines;
+    for await (const partialString of stringIterator(inputFn)) {
       this.update(partialString);
     }
   }

@@ -81,28 +81,33 @@ const resetGameState = () => {
 
 async function runGamemode(gamemode: GameModeConfig) {
   // Pregame
-  timeManager.startTimer(pregameTimerKey, gamemode.pregameTimeLimitSeconds);
+  timeManager.setTimer(pregameTimerKey, gamemode.pregameTimeLimitSeconds);
+  timeManager.startTimer(pregameTimerKey);
 
   const displayPregameTimerIntervalId = terminalManager.displayDynamicContent(
-    () =>
-      `Pregame Timer: ${timeManager.getTimeRemainingFormatted(pregameTimerKey)}`
+    gamemode.pregameTimerMessage
   );
-
   await waitForCondition(() => timeManager.isTimerEnded(pregameTimerKey));
+
   clearInterval(displayPregameTimerIntervalId);
   terminalManager.clearTerminal();
 
   // Game Started
-  // Need to display timer and prompt, then start timer and update
-  await terminalManager.type(
-    `Time remaining: ${timeManager.getTimeRemainingFormatted(
-      overallTimerKey
-    )}\n` + gamemode.start.message()
+  timeManager.setTimer(overallTimerKey, gamemode.overallTimeLimitSeconds);
+  await terminalManager.type(gamemode.start.message); //() => startObjectivePromptMessage(gamemode));
+  timeManager.startTimer(overallTimerKey);
+  let startObjective = false;
+  const startObjectivePromptIntervalId = terminalManager.displayDynamicContent(
+    gamemode.start.message
   );
-  await displayPrompt(gamemode.start.message());
+  terminalManager.listenForRawInput(() => (startObjective = true));
+  await waitForCondition(() => startObjective);
+
+  terminalManager.stopListeningForRawInput();
+  clearInterval(startObjectivePromptIntervalId);
   terminalManager.clearTerminal();
 
-  const activelyTypingDisplay = terminalManager.type(gamemode.display());
+  const activelyTypingDisplay = terminalManager.type(gamemode.display);
   await pause(1000);
   AudioPlayer.play(gamemode.start.audioPath);
   await activelyTypingDisplay;
@@ -131,7 +136,7 @@ async function runGamemode(gamemode: GameModeConfig) {
   } else {
     winCondition = gamemode.tie;
   }
-  const activelyTypingWinMessage = terminalManager.type(winCondition.message());
+  const activelyTypingWinMessage = terminalManager.type(winCondition.message);
   await pause(1000);
   AudioPlayer.play(winCondition.audioPath);
   await activelyTypingWinMessage;
