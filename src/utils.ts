@@ -17,18 +17,28 @@ export async function* stringIterator(
   skipLines: number = 0
 ) {
   let currentString = "";
+  let lineCount = 0;
 
   for (let i = 0; i < inputFn().length; i++) {
     const inputString = inputFn();
-    currentString = inputString.slice(0, i);
-
-    yield currentString;
-
     const char = inputString[i];
+
+    // If we haven't reached the desired line to start yielding, just skip processing
     if (char === "\n") {
-      await pause(pauseTimeNewlineMs);
-    } else if (!/\s/.test(char)) {
-      await pause(pauseTimeNonNewlineMs);
+      lineCount++;
+    }
+
+    // Start yielding only after skipping the specified number of lines
+    if (lineCount >= skipLines) {
+      currentString = inputString.slice(0, i + 1);
+      yield currentString;
+
+      // Pause based on the character type
+      if (char === "\n") {
+        await pause(pauseTimeNewlineMs);
+      } else if (!/\s/.test(char)) {
+        await pause(pauseTimeNonNewlineMs);
+      }
     }
   }
 }
@@ -82,3 +92,14 @@ export const generateRandomString = (length: number, characters: string) => {
   }
   return result;
 };
+
+export const generateRandomCode =
+  (length: number, characters: string) => () => {
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length)
+      );
+    }
+    return result;
+  };

@@ -20,12 +20,13 @@ const pressToShowGamemodeSelectCount = 10;
 
 const pregameTimerKey = "pregame";
 const overallTimerKey = "overall";
-const ingameTimerKey = "ingame";
+const objectiveTimerKey = "ingame";
 const terminalManager = new TerminalManager(dynamicDisplayRefreshRateMs);
 const timeManager = new TimeManager();
-const getCurrentCode = () => randomInt(10000); // TODO: Should be implemented separately and configured in gamemodes
-let currentCode: number;
-let acceptedCodes: string[];
+let positiveCode: string;
+let negativeCode: string;
+let acceptedPositiveCodes: string[];
+let acceptedNegativeCodes: string[];
 let lastCodeResult: CodeResult;
 let currentProgressToObjective: number;
 let userInput: string;
@@ -34,12 +35,14 @@ const gamemodeParams: GameModeParams = {
   getTimeManager: () => timeManager,
   getCurrentProgressToObjective: () => currentProgressToObjective,
   getUserInput: () => userInput,
-  getAcceptedCodes: () => acceptedCodes,
-  getCurrentCode: () => currentCode,
+  getAcceptedPositiveCodes: () => acceptedPositiveCodes,
+  getAcceptedNegativeCodes: () => acceptedNegativeCodes,
+  getPositiveCode: () => positiveCode,
+  getNegativeCode: () => negativeCode,
   getLastCodeResult: () => lastCodeResult,
   pregameTimerKey,
   overallTimerKey,
-  ingameTimerKey,
+  objectiveTimerKey,
 };
 
 const handleRawInput =
@@ -47,35 +50,56 @@ const handleRawInput =
     if (key.name === "backspace") {
       userInput = userInput.slice(0, -1);
     } else if (key.name === "return") {
-      if (userInput === currentCode.toString()) {
-        submitInput(userInput);
+      if (userInput === positiveCode.toString()) {
+        submitInput(userInput, gamemode, true);
+      } else if (userInput === negativeCode.toString()) {
+        submitInput(userInput, gamemode, false);
       } else {
         rejectInput(userInput);
       }
       userInput = "";
     } else {
-      userInput += char;
+      userInput += char.toUpperCase();
     }
-    const newContent = gamemode.display();
+    const newContent = gamemode.objectiveDisplayMessage();
     terminalManager.update(newContent);
   };
 
-const submitInput = (input: string) => {
-  currentProgressToObjective += 0.5; // TODO: HARCODING WARNING (should be configured in gamemode)
-  acceptedCodes.push(input);
+const submitInput = (
+  input: string,
+  gamemode: GameModeConfig,
+  isPositive: boolean
+) => {
+  const progressChange = 1 / gamemode.codeCount;
+  if (isPositive) {
+    acceptedPositiveCodes.push(input);
+    currentProgressToObjective += progressChange;
+    currentProgressToObjective = parseFloat(
+      currentProgressToObjective.toFixed(1)
+    );
+    positiveCode = gamemode.generatePositiveCode();
+  } else {
+    acceptedNegativeCodes.push(input);
+    currentProgressToObjective -= progressChange;
+    currentProgressToObjective = parseFloat(
+      currentProgressToObjective.toFixed(1)
+    );
+    negativeCode = gamemode.generateNegativeCode();
+  }
   lastCodeResult = "Accepted";
-  currentCode = getCurrentCode();
 };
 
 const rejectInput = (input: string) => {
   lastCodeResult = "Rejected";
 };
 
-const resetGameState = () => {
-  currentCode = getCurrentCode();
-  acceptedCodes = [];
+const resetGameState = (gamemode: GameModeConfig) => {
+  positiveCode = gamemode.generatePositiveCode();
+  negativeCode = gamemode.generateNegativeCode();
+  acceptedPositiveCodes = [];
+  acceptedNegativeCodes = [];
   lastCodeResult = "Pending";
-  currentProgressToObjective = 0;
+  currentProgressToObjective = gamemode.objectiveStartProgress;
   userInput = "";
 };
 
@@ -94,7 +118,7 @@ async function runGamemode(gamemode: GameModeConfig) {
 
   // Game Started
   timeManager.setTimer(overallTimerKey, gamemode.overallTimeLimitSeconds);
-  await terminalManager.type(gamemode.start.message); //() => startObjectivePromptMessage(gamemode));
+  await terminalManager.type(gamemode.start.message);
   timeManager.startTimer(overallTimerKey);
   let startObjective = false;
   const startObjectivePromptIntervalId = terminalManager.displayDynamicContent(
@@ -107,31 +131,39 @@ async function runGamemode(gamemode: GameModeConfig) {
   clearInterval(startObjectivePromptIntervalId);
   terminalManager.clearTerminal();
 
-  const activelyTypingDisplay = terminalManager.type(gamemode.display);
+  const typingObjectiveDisplay = terminalManager.type(
+    gamemode.objectiveDisplayMessage,
+    1
+  );
   await pause(1000);
   AudioPlayer.play(gamemode.start.audioPath);
-  await activelyTypingDisplay;
+  await typingObjectiveDisplay;
 
   // Objective Phase
   const displayIntervalId = terminalManager.displayDynamicContent(
-    gamemode.display
+    gamemode.objectiveDisplayMessage
   );
   terminalManager.listenForRawInput(handleRawInput(gamemode));
-
-  await waitForCondition(
-    () =>
-      gamemode.team1Win.condition() ||
-      gamemode.team2Win.condition() ||
-      gamemode.tie.condition()
-  );
+  let team1Win = false;
+  let team2Win = false;
+  let teamsTied = false;
+  await waitForCondition(() => {
+    team1Win = gamemode.team1Win.condition();
+    team2Win = gamemode.team2Win.condition();
+    teamsTied = gamemode.tie.condition();
+    return team1Win || team2Win || teamsTied;
+  });
   terminalManager.stopListeningForRawInput();
   clearInterval(displayIntervalId);
 
+  timeManager.stopTimer(overallTimerKey);
+  timeManager.stopTimer(objectiveTimerKey);
+
   // Game End
   let winCondition = undefined;
-  if (gamemode.team1Win.condition()) {
+  if (team1Win) {
     winCondition = gamemode.team1Win;
-  } else if (gamemode.team2Win.condition()) {
+  } else if (team2Win) {
     winCondition = gamemode.team2Win;
   } else {
     winCondition = gamemode.tie;
@@ -142,7 +174,8 @@ async function runGamemode(gamemode: GameModeConfig) {
   await activelyTypingWinMessage;
 
   for (let i = 0; i < pressToShowGamemodeSelectCount; i++) {
-    await displayPrompt("");
+    await terminalManager.clearTerminal();
+    await displayPrompt(winCondition.message());
   }
 }
 
@@ -181,7 +214,7 @@ async function selectGamemode() {
   }
 
   const gamemode = gamemodes[selectedId];
-  resetGameState();
+  resetGameState(gamemode);
   await runGamemode(gamemode);
   return true;
 }

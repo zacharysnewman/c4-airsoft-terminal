@@ -1,5 +1,6 @@
 import { getProgressBar } from "./progressBar.js";
 import { ConditionConfig, GameModeParams } from "./types.js";
+import { generateRandomCode } from "./utils.js";
 
 export const dynamicDisplayRefreshRateMs = 500;
 
@@ -8,19 +9,19 @@ export interface GameModeConfig {
   pregameTimeLimitSeconds: number;
   overallTimeLimitSeconds: number;
   objectiveTimeLimitSeconds: number;
+  objectiveStartProgress: number;
+  codeCount: number;
+  generatePositiveCode: () => string;
+  generateNegativeCode: () => string;
   pregameTimerMessage: () => string;
   start: ConditionConfig;
-  display: () => string;
+  objectiveDisplayMessage: () => string;
   team1Win: ConditionConfig;
   team2Win: ConditionConfig;
   tie: ConditionConfig;
   // conditionalAudio[]
-  // codeCount
-  // codeCharacters
 }
 
-// Pre game timer
-// Overall game timer
 // Gamemode specific timers
 // Customizing codes and code progress %
 // Audio conditions
@@ -28,18 +29,26 @@ export const getGamemodes = ({
   getTimeManager,
   getCurrentProgressToObjective,
   getUserInput,
-  getAcceptedCodes,
-  getCurrentCode,
+  getAcceptedPositiveCodes,
+  getPositiveCode,
+  getNegativeCode,
   getLastCodeResult,
   pregameTimerKey,
   overallTimerKey,
-  ingameTimerKey,
+  objectiveTimerKey: ingameTimerKey,
 }: GameModeParams): GameModeConfig[] => [
   {
     gameModeName: "Nuclear Launch Sequence",
     pregameTimeLimitSeconds: 0,
     overallTimeLimitSeconds: 20 * 60,
-    objectiveTimeLimitSeconds: 2 * 60,
+    objectiveTimeLimitSeconds: 0,
+    objectiveStartProgress: 0.5,
+    codeCount: 10,
+    generatePositiveCode: generateRandomCode(
+      4,
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    ),
+    generateNegativeCode: () => "!@#$|",
     pregameTimerMessage: () =>
       `Pregame Timer: ${getTimeManager().getTimeRemainingFormatted(
         pregameTimerKey
@@ -55,7 +64,7 @@ export const getGamemodes = ({
         ].join("\n"),
       audioPath: "audio/StartLaunch.mp3",
     },
-    display: () =>
+    objectiveDisplayMessage: () =>
       [
         `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
           overallTimerKey
@@ -64,9 +73,9 @@ export const getGamemodes = ({
         `Target acquired: Washington state`,
         `Launch codes requested...`,
         ``,
-        `Accepted codes: ${getAcceptedCodes().join(", ")}`,
-        `${getProgressBar(getCurrentProgressToObjective())}`,
-        `Current launch code is ${getCurrentCode()}`,
+        `Accepted codes: ${getAcceptedPositiveCodes().join(", ")}`,
+        `Sequence: ${getProgressBar(getCurrentProgressToObjective())}`,
+        `Current launch code is ${getPositiveCode()}`,
         `(${getLastCodeResult()}) Enter launch code: ${getUserInput()}`,
       ].join("\n"),
     team1Win: {
@@ -77,6 +86,12 @@ export const getGamemodes = ({
           "Nuclear ICBM launched...",
           "Goodbye Washington and good luck...",
           "Attackers win!",
+          `Elapsed time: ${getTimeManager().getElapsedTimeFormatted(
+            overallTimerKey
+          )}`,
+          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+            overallTimerKey
+          )}`,
           "\n",
         ].join("\n"),
       audioPath: "audio/SuccessLaunch.mp3",

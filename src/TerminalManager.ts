@@ -40,8 +40,9 @@ export class TerminalManager {
   }
 
   async type(inputFn: () => string, skipLines: number = 0) {
+    // return inputFn();
     let i = skipLines;
-    for await (const partialString of stringIterator(inputFn)) {
+    for await (const partialString of stringIterator(inputFn, skipLines)) {
       this.update(partialString);
     }
   }

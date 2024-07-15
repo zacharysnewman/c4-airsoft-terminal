@@ -4,12 +4,14 @@ export interface GameModeParams {
   getTimeManager: () => TimeManager;
   getCurrentProgressToObjective: () => number;
   getUserInput: () => string;
-  getAcceptedCodes: () => string[];
-  getCurrentCode: () => number;
+  getAcceptedPositiveCodes: () => string[];
+  getAcceptedNegativeCodes: () => string[];
+  getPositiveCode: () => string;
+  getNegativeCode: () => string;
   getLastCodeResult: () => CodeResult;
   pregameTimerKey: string;
   overallTimerKey: string;
-  ingameTimerKey: string;
+  objectiveTimerKey: string;
 }
 
 interface ConditionConfig {

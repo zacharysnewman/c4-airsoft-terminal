@@ -4,7 +4,7 @@ type Timer = {
   startTime: number;
   timeLimit: number;
   isRunning: boolean;
-  stoppedTime?: number; // Separate property for storing stopped time
+  stoppedTime?: number;
 };
 
 export class TimeManager {
@@ -18,8 +18,8 @@ export class TimeManager {
     const currentTime = Date.now();
     this.timers.set(name, {
       startTime: currentTime,
-      timeLimit: timeLimitSeconds * 1000, // Convert seconds to milliseconds
-      isRunning: false, // Timer is set but not started yet
+      timeLimit: timeLimitSeconds * 1000,
+      isRunning: false,
     });
   }
 
@@ -43,7 +43,9 @@ export class TimeManager {
   getElapsedTimeMs(name: string): number {
     const timer = this.timers.get(name);
     if (!timer) return 0;
-    return Date.now() - timer.startTime;
+    return timer.stoppedTime
+      ? timer.stoppedTime - timer.startTime
+      : Date.now() - timer.startTime;
   }
 
   getElapsedTimeInSeconds(name: string): number {
