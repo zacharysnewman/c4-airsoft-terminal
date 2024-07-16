@@ -1,4 +1,3 @@
-import { randomInt } from "crypto";
 import {
   displayPrompt,
   displayPromptForInput,
@@ -7,12 +6,13 @@ import {
 } from "./src/utils.js";
 import { TerminalManager } from "./src/TerminalManager.js";
 import { TimeManager } from "./src/TimeManager.js";
+import { dynamicDisplayRefreshRateMs, getGamemodes } from "./src/gamemodes.js";
 import {
+  CodeResult,
+  GameModeParams,
+  MessageWithAudio,
   GameModeConfig,
-  dynamicDisplayRefreshRateMs,
-  getGamemodes,
-} from "./src/gamemodes.js";
-import { CodeResult, GameModeParams } from "./src/types.js";
+} from "./src/types.js";
 import AudioPlayer from "./src/AudioPlayer.js";
 
 // Press "enter" this # times to access gamemode selection (after finishing a game)
@@ -106,11 +106,11 @@ const resetGameState = (gamemode: GameModeConfig) => {
 async function runGamemode(gamemode: GameModeConfig) {
   // Pregame
   timeManager.setTimer(pregameTimerKey, gamemode.pregameTimeLimitSeconds);
-  timeManager.startTimer(pregameTimerKey);
-
   const displayPregameTimerIntervalId = terminalManager.displayDynamicContent(
     gamemode.pregameTimerMessage
   );
+  timeManager.startTimer(pregameTimerKey);
+
   await waitForCondition(() => timeManager.isTimerEnded(pregameTimerKey));
 
   clearInterval(displayPregameTimerIntervalId);
@@ -144,38 +144,41 @@ async function runGamemode(gamemode: GameModeConfig) {
     gamemode.objectiveDisplayMessage
   );
   terminalManager.listenForRawInput(handleRawInput(gamemode));
-  let team1Win = false;
-  let team2Win = false;
-  let teamsTied = false;
+
+  let winMessage: MessageWithAudio = undefined as unknown as MessageWithAudio;
   await waitForCondition(() => {
-    team1Win = gamemode.team1Win.condition();
-    team2Win = gamemode.team2Win.condition();
-    teamsTied = gamemode.tie.condition();
-    return team1Win || team2Win || teamsTied;
+    const overallTimerEnded = timeManager.isTimerEnded(overallTimerKey);
+    const objectiveTimerEnded = timeManager.isTimerEnded(objectiveTimerKey);
+    const objectiveReachedMin = currentProgressToObjective <= 0;
+    const objectiveReachedMax = currentProgressToObjective >= 1;
+
+    if (overallTimerEnded && !!gamemode.overallTimerEnds) {
+      winMessage = gamemode.overallTimerEnds;
+    } else if (objectiveTimerEnded && !!gamemode.objectiveTimerEnds) {
+      winMessage = gamemode.objectiveTimerEnds;
+    } else if (objectiveReachedMin && !!gamemode.objectiveReachesMin) {
+      winMessage = gamemode.objectiveReachesMin;
+    } else if (objectiveReachedMax && !!gamemode.objectiveReachesMax) {
+      winMessage = gamemode.objectiveReachesMax;
+    }
+
+    return !!winMessage;
   });
+
   terminalManager.stopListeningForRawInput();
   clearInterval(displayIntervalId);
-
   timeManager.stopTimer(overallTimerKey);
   timeManager.stopTimer(objectiveTimerKey);
 
   // Game End
-  let winCondition = undefined;
-  if (team1Win) {
-    winCondition = gamemode.team1Win;
-  } else if (team2Win) {
-    winCondition = gamemode.team2Win;
-  } else {
-    winCondition = gamemode.tie;
-  }
-  const activelyTypingWinMessage = terminalManager.type(winCondition.message);
+  const activelyTypingWinMessage = terminalManager.type(winMessage.message);
   await pause(1000);
-  AudioPlayer.play(winCondition.audioPath);
+  AudioPlayer.play(winMessage.audioPath);
   await activelyTypingWinMessage;
 
   for (let i = 0; i < pressToShowGamemodeSelectCount; i++) {
     await terminalManager.clearTerminal();
-    await displayPrompt(winCondition.message());
+    await displayPrompt(winMessage.message());
   }
 }
 

@@ -103,3 +103,6 @@ export const generateRandomCode =
     }
     return result;
   };
+
+export const getPercentage = (progress: number) =>
+  `${(progress * 100).toFixed(2)}%`;

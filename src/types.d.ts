@@ -14,8 +14,25 @@ export interface GameModeParams {
   objectiveTimerKey: string;
 }
 
-interface ConditionConfig {
-  condition: () => boolean;
+interface MessageWithAudio {
   message: () => string;
   audioPath: string;
+}
+
+export interface GameModeConfig {
+  gameModeName: string;
+  pregameTimeLimitSeconds: number;
+  overallTimeLimitSeconds: number;
+  objectiveTimeLimitSeconds: number;
+  objectiveStartProgress: number;
+  codeCount: number;
+  generatePositiveCode: () => string;
+  generateNegativeCode: () => string;
+  pregameTimerMessage: () => string;
+  start: MessageWithAudio;
+  objectiveDisplayMessage: () => string;
+  overallTimerEnds: MessageWithAudio;
+  objectiveTimerEnds?: MessageWithAudio;
+  objectiveReachesMin?: MessageWithAudio;
+  objectiveReachesMax?: MessageWithAudio;
 }

@@ -1,26 +1,14 @@
 import { getProgressBar } from "./progressBar.js";
-import { ConditionConfig, GameModeParams } from "./types.js";
+import { GameModeConfig, GameModeParams } from "./types.js";
 import { generateRandomCode } from "./utils.js";
 
 export const dynamicDisplayRefreshRateMs = 500;
 
-export interface GameModeConfig {
-  gameModeName: string;
-  pregameTimeLimitSeconds: number;
-  overallTimeLimitSeconds: number;
-  objectiveTimeLimitSeconds: number;
-  objectiveStartProgress: number;
-  codeCount: number;
-  generatePositiveCode: () => string;
-  generateNegativeCode: () => string;
-  pregameTimerMessage: () => string;
-  start: ConditionConfig;
-  objectiveDisplayMessage: () => string;
-  team1Win: ConditionConfig;
-  team2Win: ConditionConfig;
-  tie: ConditionConfig;
-  // conditionalAudio[]
-}
+const unguessable = "!@#$|";
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const numbers = "0123456789";
+const alphanumeric = letters + numbers;
+const binary = "01";
 
 // Gamemode specific timers
 // Customizing codes and code progress %
@@ -35,26 +23,22 @@ export const getGamemodes = ({
   getLastCodeResult,
   pregameTimerKey,
   overallTimerKey,
-  objectiveTimerKey: ingameTimerKey,
+  objectiveTimerKey,
 }: GameModeParams): GameModeConfig[] => [
   {
     gameModeName: "Nuclear Launch Sequence",
-    pregameTimeLimitSeconds: 0,
+    pregameTimeLimitSeconds: 10,
     overallTimeLimitSeconds: 20 * 60,
     objectiveTimeLimitSeconds: 0,
-    objectiveStartProgress: 0.5,
+    objectiveStartProgress: 0,
     codeCount: 10,
-    generatePositiveCode: generateRandomCode(
-      4,
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    ),
-    generateNegativeCode: () => "!@#$|",
+    generatePositiveCode: generateRandomCode(4, alphanumeric),
+    generateNegativeCode: () => unguessable,
     pregameTimerMessage: () =>
       `Pregame Timer: ${getTimeManager().getTimeRemainingFormatted(
         pregameTimerKey
       )}`,
     start: {
-      condition: () => false,
       message: () =>
         [
           `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
@@ -78,26 +62,7 @@ export const getGamemodes = ({
         `Current launch code is ${getPositiveCode()}`,
         `(${getLastCodeResult()}) Enter launch code: ${getUserInput()}`,
       ].join("\n"),
-    team1Win: {
-      condition: () => getCurrentProgressToObjective() >= 1,
-      message: () =>
-        [
-          "Launch codes accepted...",
-          "Nuclear ICBM launched...",
-          "Goodbye Washington and good luck...",
-          "Attackers win!",
-          `Elapsed time: ${getTimeManager().getElapsedTimeFormatted(
-            overallTimerKey
-          )}`,
-          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
-            overallTimerKey
-          )}`,
-          "\n",
-        ].join("\n"),
-      audioPath: "audio/SuccessLaunch.mp3",
-    },
-    team2Win: {
-      condition: () => getTimeManager().isTimerEnded(overallTimerKey),
+    overallTimerEnds: {
       message: () =>
         [
           "Time expired...",
@@ -108,12 +73,120 @@ export const getGamemodes = ({
         ].join("\n"),
       audioPath: "audio/FailureLaunch.mp3",
     },
-    tie: {
-      condition: () => false,
-      message: () => "",
+    objectiveTimerEnds: undefined,
+    objectiveReachesMin: undefined,
+    objectiveReachesMax: {
+      message: () =>
+        [
+          "Launch codes accepted...",
+          "Nuclear ICBM launched...",
+          "Goodbye Washington and good luck...",
+          "Attackers win!",
+          "\n",
+        ].join("\n"),
+      audioPath: "audio/SuccessLaunch.mp3",
+    },
+  },
+  // {
+  //   gameModeName: "Search and Destroy",
+  //   pregameTimeLimitSeconds: 0,
+  //   overallTimeLimitSeconds: 5 * 60,
+  //   objectiveTimeLimitSeconds: 0,
+  //   objectiveStartProgress: 0,
+  //   codeCount: 5,
+  //   generatePositiveCode: generateRandomCode(2, binary),
+  //   generateNegativeCode: generateRandomCode(2, letters),
+  //   pregameTimerMessage: () =>
+  //     `Pregame Timer: ${getTimeManager().getTimeRemainingFormatted(
+  //       pregameTimerKey
+  //     )}`,
+  //   start: {
+  //     message: () =>
+  //       [
+  //         `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+  //           overallTimerKey
+  //         )}`,
+  //         "Would you like to arm the bomb? ",
+  //       ].join("\n"),
+  //     audioPath: "audio/StartLaunch.mp3",
+  //   },
+  //   objectiveDisplayMessage: () =>
+  //     [
+  //       `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+  //         overallTimerKey
+  //       )}`,
+  //       `Launching bomb arming app...`,
+  //       `Administrator permissions required...`,
+  //       `Bomb arming codes requested...`,
+  //       ``,
+  //       `Arming: ${getProgressBar(getCurrentProgressToObjective())}`,
+  //       `Current arming code is ${getPositiveCode()}`,
+  //       `(${getLastCodeResult()}) Enter arming code: ${getUserInput()}`,
+  //     ].join("\n"),
+  //   overallTimerEnds: {
+  //     message: () =>
+  //       [
+  //         "Time expired...",
+  //         "Launch sequence terminated...",
+  //         "Washington thanks you...",
+  //         "Defenders win!",
+  //         "\n",
+  //       ].join("\n"),
+  //     audioPath: "audio/FailureLaunch.mp3",
+  //   },
+  //   objectiveTimerEnds: {
+  //     message: () =>
+  //       [
+  //         "Bomb detonated!",
+  //         "Congratulations, you blew everyone up...",
+  //         "...including yourself.",
+  //         "Attackers win!",
+  //         "\n",
+  //       ].join("\n"),
+  //     audioPath: "audio/SuccessLaunch.mp3",
+  //   },
+  // },
+  {
+    gameModeName: "Uplink",
+    pregameTimeLimitSeconds: 0,
+    overallTimeLimitSeconds: 5 * 60,
+    objectiveTimeLimitSeconds: 0,
+    objectiveStartProgress: 0,
+    codeCount: 5,
+    generatePositiveCode: generateRandomCode(2, binary),
+    generateNegativeCode: generateRandomCode(2, letters),
+    pregameTimerMessage: () =>
+      `Pregame Timer: ${getTimeManager().getTimeRemainingFormatted(
+        pregameTimerKey
+      )}`,
+    start: {
+      message: () =>
+        [
+          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+            overallTimerKey
+          )}`,
+          "Would you like to start the Uplink? ",
+        ].join("\n"),
+      audioPath: "audio/StartLaunch.mp3",
+    },
+    objectiveDisplayMessage: () => [""].join("\n"),
+    overallTimerEnds: {
+      message: () =>
+        [
+          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+            overallTimerKey
+          )}`,
+          ``,
+        ].join("\n"),
+      audioPath: "",
+    },
+    objectiveReachesMin: {
+      message: () => [""].join("\n"),
+      audioPath: "",
+    },
+    objectiveReachesMax: {
+      message: () => [""].join("\n"),
       audioPath: "",
     },
   },
-  { gameModeName: "SnD" } as GameModeConfig,
-  { gameModeName: "Tug of War" } as GameModeConfig,
 ];

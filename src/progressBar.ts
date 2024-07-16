@@ -10,5 +10,5 @@ export function getProgressBar(progress: number) {
 
   const percentage = (progress * 100).toFixed(2);
 
-  return `[${filledPart}${emptyPart}] ${percentage}%`;
+  return `[${filledPart}${emptyPart}]`;
 }
