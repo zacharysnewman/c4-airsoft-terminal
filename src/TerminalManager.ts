@@ -3,6 +3,7 @@ import readline from "readline";
 import { stringIterator } from "./utils.js";
 
 export class TerminalManager {
+  private lastOutput: string;
   private lineCount: number;
   private lastLineLength: number;
   private keypressListener:
@@ -11,6 +12,7 @@ export class TerminalManager {
   private dynamicDisplayRefreshRateMs: number;
 
   constructor(dynamicDisplayRefreshRateMs: number) {
+    this.lastOutput = "";
     this.lineCount = 0;
     this.lastLineLength = 0;
     this.dynamicDisplayRefreshRateMs = dynamicDisplayRefreshRateMs;
@@ -24,6 +26,7 @@ export class TerminalManager {
     const lines = contents.split("\n");
     this.lineCount = lines.length - 1;
     this.lastLineLength = lines[lines.length - 1]?.length ?? 0;
+    this.lastOutput = contents;
     process.stdout.write(contents);
   }
 
@@ -50,7 +53,9 @@ export class TerminalManager {
   displayDynamicContent(getOutput: () => string) {
     const intervalId = setInterval(() => {
       const newContent = getOutput();
-      this.update(newContent);
+      if (newContent !== this.lastOutput) {
+        this.update(newContent);
+      }
     }, this.dynamicDisplayRefreshRateMs);
     return intervalId;
   }

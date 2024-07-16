@@ -8,7 +8,5 @@ export function getProgressBar(progress: number) {
   const filledPart = filledChar.repeat(filledLength);
   const emptyPart = emptyChar.repeat(barCharsLength - filledLength);
 
-  const percentage = (progress * 100).toFixed(2);
-
   return `[${filledPart}${emptyPart}]`;
 }

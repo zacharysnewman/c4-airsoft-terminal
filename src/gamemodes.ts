@@ -1,8 +1,8 @@
 import { getProgressBar } from "./progressBar.js";
 import { GameModeConfig, GameModeParams } from "./types.js";
-import { generateRandomCode } from "./utils.js";
+import { generateRandomCode, getPercentage } from "./utils.js";
 
-export const dynamicDisplayRefreshRateMs = 500;
+export const dynamicDisplayRefreshRateMs = 100;
 
 const unguessable = "!@#$|";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -149,10 +149,10 @@ export const getGamemodes = ({
   {
     gameModeName: "Uplink",
     pregameTimeLimitSeconds: 0,
-    overallTimeLimitSeconds: 5 * 60,
+    overallTimeLimitSeconds: 20 * 60,
     objectiveTimeLimitSeconds: 0,
     objectiveStartProgress: 0,
-    codeCount: 5,
+    codeCount: 2,
     generatePositiveCode: generateRandomCode(2, binary),
     generateNegativeCode: generateRandomCode(2, letters),
     pregameTimerMessage: () =>
@@ -165,19 +165,26 @@ export const getGamemodes = ({
           `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
             overallTimerKey
           )}`,
-          "Would you like to start the Uplink? ",
+          "Initiate uplink? ",
         ].join("\n"),
       audioPath: "audio/StartLaunch.mp3",
     },
-    objectiveDisplayMessage: () => [""].join("\n"),
+    objectiveDisplayMessage: () =>
+      [
+        `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+          overallTimerKey
+        )}`,
+        `HACKER codes: ${getAcceptedPositiveCodes().length}`,
+        // `HACKER codes: ${getAcceptedNegativeCodes().length}`,
+        `Uplink: ${getProgressBar(
+          getCurrentProgressToObjective()
+        )} ${getPercentage(getCurrentProgressToObjective())}`,
+        `Current HACKER uplink code is ${getPositiveCode()}`,
+        `Current SECURITY uplink code is ${getNegativeCode()}`,
+        `(${getLastCodeResult()}) Enter YOUR uplink code: ${getUserInput()}`,
+      ].join("\n"),
     overallTimerEnds: {
-      message: () =>
-        [
-          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
-            overallTimerKey
-          )}`,
-          ``,
-        ].join("\n"),
+      message: () => [``].join("\n"),
       audioPath: "",
     },
     objectiveReachesMin: {
