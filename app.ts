@@ -30,6 +30,7 @@ let acceptedNegativeCodes: string[];
 let lastCodeResult: CodeResult;
 let currentProgressToObjective: number;
 let userInput: string;
+let currentObjectivePhase: number;
 
 const gamemodeParams: GameModeParams = {
   getTimeManager: () => timeManager,
@@ -61,7 +62,8 @@ const handleRawInput =
     } else {
       userInput += char.toUpperCase();
     }
-    const newContent = gamemode.objectiveDisplayMessage();
+    const newContent =
+      gamemode.objectivePhases[currentObjectivePhase].message();
     terminalManager.update(newContent);
   };
 
@@ -75,14 +77,14 @@ const submitInput = (
     acceptedPositiveCodes.push(input);
     currentProgressToObjective += progressChange;
     currentProgressToObjective = parseFloat(
-      currentProgressToObjective.toFixed(1)
+      currentProgressToObjective.toFixed(2)
     );
     positiveCode = gamemode.generatePositiveCode();
   } else {
     acceptedNegativeCodes.push(input);
     currentProgressToObjective -= progressChange;
     currentProgressToObjective = parseFloat(
-      currentProgressToObjective.toFixed(1)
+      currentProgressToObjective.toFixed(2)
     );
     negativeCode = gamemode.generateNegativeCode();
   }
@@ -101,6 +103,7 @@ const resetGameState = (gamemode: GameModeConfig) => {
   lastCodeResult = "Pending";
   currentProgressToObjective = gamemode.objectiveStartProgress;
   userInput = "";
+  currentObjectivePhase = 0;
 };
 
 async function runGamemode(gamemode: GameModeConfig) {
@@ -131,54 +134,74 @@ async function runGamemode(gamemode: GameModeConfig) {
   clearInterval(startObjectivePromptIntervalId);
   // terminalManager.clearTerminal();
 
-  const typingObjectiveDisplay = terminalManager.type(
-    gamemode.objectiveDisplayMessage,
-    1
-  );
-  await pause(1000);
-  AudioPlayer.play(gamemode.start.audioPath);
-  await typingObjectiveDisplay;
-
   // Objective Phase
-  const displayIntervalId = terminalManager.displayDynamicContent(
-    gamemode.objectiveDisplayMessage
-  );
-  terminalManager.listenForRawInput(handleRawInput(gamemode));
+  let winMessage: MessageWithAudio | undefined = undefined;
 
-  let winMessage: MessageWithAudio = undefined as unknown as MessageWithAudio;
-  await waitForCondition(() => {
-    const overallTimerEnded = timeManager.isTimerEnded(overallTimerKey);
-    const objectiveTimerEnded = timeManager.isTimerEnded(objectiveTimerKey);
-    const objectiveReachedMin = currentProgressToObjective <= 0;
-    const objectiveReachedMax = currentProgressToObjective >= 1;
+  for (let i = 0; i < gamemode.objectivePhases.length; i++) {
+    const typingObjectiveDisplay = terminalManager.type(
+      gamemode.objectivePhases[currentObjectivePhase].message,
+      1
+    );
+    await pause(1000);
+    AudioPlayer.play(gamemode.start.audioPath);
+    await typingObjectiveDisplay;
 
-    if (overallTimerEnded && !!gamemode.overallTimerEnds) {
-      winMessage = gamemode.overallTimerEnds;
-    } else if (objectiveTimerEnded && !!gamemode.objectiveTimerEnds) {
-      winMessage = gamemode.objectiveTimerEnds;
-    } else if (objectiveReachedMin && !!gamemode.objectiveReachesMin) {
-      winMessage = gamemode.objectiveReachesMin;
-    } else if (objectiveReachedMax && !!gamemode.objectiveReachesMax) {
-      winMessage = gamemode.objectiveReachesMax;
-    }
+    const displayIntervalId = terminalManager.displayDynamicContent(
+      gamemode.objectivePhases[currentObjectivePhase].message
+    );
+    terminalManager.listenForRawInput(handleRawInput(gamemode));
 
-    return !!winMessage;
-  });
+    await waitForCondition(() => {
+      const overallTimerEnded = timeManager.isTimerEnded(overallTimerKey);
+      const objectiveTimerEnded = timeManager.isTimerEnded(objectiveTimerKey);
+      const objectiveReachedMin = currentProgressToObjective <= 0;
+      const objectiveReachedMax = currentProgressToObjective >= 1;
 
-  terminalManager.stopListeningForRawInput();
-  clearInterval(displayIntervalId);
+      if (
+        overallTimerEnded &&
+        !!gamemode.objectivePhases[currentObjectivePhase].overallTimerEnds
+      ) {
+        winMessage =
+          gamemode.objectivePhases[currentObjectivePhase].overallTimerEnds;
+      } else if (
+        objectiveTimerEnded &&
+        !!gamemode.objectivePhases[currentObjectivePhase].objectiveTimerEnds
+      ) {
+        winMessage =
+          gamemode.objectivePhases[currentObjectivePhase].objectiveTimerEnds;
+      } else if (
+        objectiveReachedMin &&
+        !!gamemode.objectivePhases[currentObjectivePhase].objectiveReachesMin
+      ) {
+        winMessage =
+          gamemode.objectivePhases[currentObjectivePhase].objectiveReachesMin;
+      } else if (
+        objectiveReachedMax &&
+        !!gamemode.objectivePhases[currentObjectivePhase].objectiveReachesMax
+      ) {
+        winMessage =
+          gamemode.objectivePhases[currentObjectivePhase].objectiveReachesMax;
+      }
+
+      return !!winMessage;
+    });
+
+    terminalManager.stopListeningForRawInput();
+    clearInterval(displayIntervalId);
+  }
+
   timeManager.stopTimer(overallTimerKey);
   timeManager.stopTimer(objectiveTimerKey);
 
   // Game End
-  const activelyTypingWinMessage = terminalManager.type(winMessage.message);
+  const activelyTypingWinMessage = terminalManager.type(winMessage!.message);
   await pause(1000);
-  AudioPlayer.play(winMessage.audioPath);
+  AudioPlayer.play(winMessage!.audioPath);
   await activelyTypingWinMessage;
 
   for (let i = 0; i < pressToShowGamemodeSelectCount; i++) {
     await terminalManager.clearTerminal();
-    await displayPrompt(winMessage.message());
+    await displayPrompt(winMessage!.message());
   }
 }
 

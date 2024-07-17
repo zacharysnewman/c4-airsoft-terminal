@@ -23,14 +23,7 @@ class AudioPlayer {
     return new Promise<void>((resolve, reject) => {
       exec(`${playCommand} "${fullPath}"`, (error, stdout, stderr) => {
         this.isPlaying = false;
-
-        if (error) {
-          console.error(`Error playing audio: ${stderr}`);
-          reject(error);
-        } else {
-          // console.log("Audio playback finished.");
-          resolve();
-        }
+        resolve();
       });
     });
   }

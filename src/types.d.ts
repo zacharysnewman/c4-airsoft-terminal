@@ -14,6 +14,14 @@ export interface GameModeParams {
   objectiveTimerKey: string;
 }
 
+interface ObjectivePhase {
+  message: () => string;
+  overallTimerEnds: MessageWithAudio;
+  objectiveTimerEnds?: MessageWithAudio;
+  objectiveReachesMin?: MessageWithAudio;
+  objectiveReachesMax?: MessageWithAudio;
+}
+
 interface MessageWithAudio {
   message: () => string;
   audioPath: string;
@@ -30,9 +38,5 @@ export interface GameModeConfig {
   generateNegativeCode: () => string;
   pregameTimerMessage: () => string;
   start: MessageWithAudio;
-  objectiveDisplayMessage: () => string;
-  overallTimerEnds: MessageWithAudio;
-  objectiveTimerEnds?: MessageWithAudio;
-  objectiveReachesMin?: MessageWithAudio;
-  objectiveReachesMax?: MessageWithAudio;
+  objectivePhases: ObjectivePhase[];
 }

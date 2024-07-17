@@ -3,7 +3,7 @@ import readline from "readline";
 import { stringIterator } from "./utils.js";
 
 export class TerminalManager {
-  private lastOutput: string;
+  public lastOutput: string;
   private lineCount: number;
   private lastLineLength: number;
   private keypressListener:
