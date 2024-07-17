@@ -42,6 +42,37 @@ export class TerminalManager {
     this.setCursorToEnd();
   }
 
+  clearConsoleAndPrint(initialString: string) {
+    process.stdout.write(ansiEscapes.clearScreen);
+    console.log(initialString);
+  }
+
+  updateString(oldString: string, newString: string) {
+    const oldLines = oldString.split("\n");
+    const newLines = newString.split("\n");
+    const maxLength = Math.max(oldLines.length, newLines.length);
+
+    for (let i = 0; i < maxLength; i++) {
+      const oldLine = oldLines[i] || "";
+      const newLine = newLines[i] || "";
+
+      let diffIndex = 0;
+      while (
+        oldLine[diffIndex] === newLine[diffIndex] &&
+        diffIndex < oldLine.length
+      ) {
+        diffIndex++;
+      }
+
+      process.stdout.write(ansiEscapes.cursorTo(diffIndex, i));
+      process.stdout.write(newLine.slice(diffIndex));
+
+      if (oldLine.length > newLine.length) {
+        process.stdout.write(ansiEscapes.eraseEndLine);
+      }
+    }
+  }
+
   async type(inputFn: () => string, skipLines: number = 0) {
     // return inputFn();
     let i = skipLines;
