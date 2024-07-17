@@ -51,6 +51,9 @@ export class TerminalManager {
     const oldLines = oldString.split("\n");
     const newLines = newString.split("\n");
     const maxLength = Math.max(oldLines.length, newLines.length);
+    this.lineCount = newLines.length - 1;
+    this.lastLineLength = newLines[newLines.length - 1]?.length ?? 0;
+    this.lastOutput = newString;
 
     for (let i = 0; i < maxLength; i++) {
       const oldLine = oldLines[i] || "";
@@ -64,14 +67,16 @@ export class TerminalManager {
         diffIndex++;
       }
 
-      process.stdout.write(ansiEscapes.cursorTo(diffIndex, i));
-      process.stdout.write(newLine.slice(diffIndex));
+      if (diffIndex < oldLine.length || diffIndex < newLine.length) {
+        process.stdout.write(ansiEscapes.cursorTo(diffIndex, i));
+        process.stdout.write(newLine.slice(diffIndex));
 
-      if (oldLine.length > newLine.length) {
-        process.stdout.write(ansiEscapes.eraseEndLine);
+        if (oldLine.length > newLine.length) {
+          process.stdout.write(ansiEscapes.eraseEndLine);
+        }
       }
     }
-    this.lastOutput = newString;
+    this.setCursorToEnd();
   }
 
   async type(inputFn: () => string, skipLines: number = 0) {
