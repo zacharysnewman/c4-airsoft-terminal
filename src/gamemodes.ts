@@ -2,7 +2,7 @@ import { getProgressBar } from "./progressBar.js";
 import { GameModeConfig, GameModeParams } from "./types.js";
 import { generateRandomCode, getPercentage } from "./utils.js";
 
-export const dynamicDisplayRefreshRateMs = 1;
+export const dynamicDisplayRefreshRateMs = 100;
 
 const unguessable = "!@#$|";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
