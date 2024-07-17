@@ -2,7 +2,7 @@ import { getProgressBar } from "./progressBar.js";
 import { GameModeConfig, GameModeParams } from "./types.js";
 import { generateRandomCode, getPercentage } from "./utils.js";
 
-export const dynamicDisplayRefreshRateMs = 100;
+export const dynamicDisplayRefreshRateMs = 1;
 
 const unguessable = "!@#$|";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -58,7 +58,9 @@ export const getGamemodes = ({
         `Launch codes requested...`,
         ``,
         `Accepted codes: ${getAcceptedPositiveCodes().join(", ")}`,
-        `Sequence: ${getProgressBar(getCurrentProgressToObjective())}`,
+        `Sequence: ${getProgressBar(
+          getCurrentProgressToObjective()
+        )} ${getPercentage(getCurrentProgressToObjective())}`,
         `Current launch code is ${getPositiveCode()}`,
         `(${getLastCodeResult()}) Enter launch code: ${getUserInput()}`,
       ].join("\n"),

@@ -114,7 +114,7 @@ async function runGamemode(gamemode: GameModeConfig) {
   await waitForCondition(() => timeManager.isTimerEnded(pregameTimerKey));
 
   clearInterval(displayPregameTimerIntervalId);
-  terminalManager.clearTerminal();
+  // terminalManager.clearTerminal();
 
   // Game Started
   timeManager.setTimer(overallTimerKey, gamemode.overallTimeLimitSeconds);
@@ -129,7 +129,7 @@ async function runGamemode(gamemode: GameModeConfig) {
 
   terminalManager.stopListeningForRawInput();
   clearInterval(startObjectivePromptIntervalId);
-  terminalManager.clearTerminal();
+  // terminalManager.clearTerminal();
 
   const typingObjectiveDisplay = terminalManager.type(
     gamemode.objectiveDisplayMessage,

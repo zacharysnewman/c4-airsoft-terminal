@@ -71,22 +71,22 @@ export class TerminalManager {
         process.stdout.write(ansiEscapes.eraseEndLine);
       }
     }
+    this.lastOutput = newString;
   }
 
   async type(inputFn: () => string, skipLines: number = 0) {
     // return inputFn();
     let i = skipLines;
     for await (const partialString of stringIterator(inputFn, skipLines)) {
-      this.update(partialString);
+      this.updateString(this.lastOutput, partialString);
     }
   }
 
   displayDynamicContent(getOutput: () => string) {
+    this.clearConsoleAndPrint(getOutput());
     const intervalId = setInterval(() => {
       const newContent = getOutput();
-      if (newContent !== this.lastOutput) {
-        this.update(newContent);
-      }
+      this.updateString(this.lastOutput, newContent);
     }, this.dynamicDisplayRefreshRateMs);
     return intervalId;
   }
