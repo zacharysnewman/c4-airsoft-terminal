@@ -2,6 +2,7 @@ import {
   displayPrompt,
   displayPromptForInput,
   pause,
+  roundUpTo,
   waitForCondition,
 } from "./src/utils.js";
 import { TerminalManager } from "./src/TerminalManager.js";
@@ -75,17 +76,17 @@ const submitInput = (
   const progressChange = 1 / gamemode.codeCount;
   if (isPositive) {
     acceptedPositiveCodes.push(input);
-    currentProgressToObjective += progressChange;
-    currentProgressToObjective = parseFloat(
-      currentProgressToObjective.toFixed(2)
-    );
+    let tempProgress = currentProgressToObjective + progressChange;
+    tempProgress = roundUpTo(tempProgress, 2);
+    tempProgress = Math.min(tempProgress, 1);
+    currentProgressToObjective = tempProgress;
     positiveCode = gamemode.generatePositiveCode();
   } else {
     acceptedNegativeCodes.push(input);
-    currentProgressToObjective -= progressChange;
-    currentProgressToObjective = parseFloat(
-      currentProgressToObjective.toFixed(2)
-    );
+    let tempProgress = currentProgressToObjective - progressChange;
+    tempProgress = roundUpTo(tempProgress, 2);
+    tempProgress = Math.max(tempProgress, 0);
+    currentProgressToObjective = tempProgress;
     negativeCode = gamemode.generateNegativeCode();
   }
   lastCodeResult = "Accepted";

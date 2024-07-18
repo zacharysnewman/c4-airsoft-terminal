@@ -106,3 +106,8 @@ export const generateRandomCode =
 
 export const getPercentage = (progress: number) =>
   `${(progress * 100).toFixed(2)}%`;
+
+export const roundUpTo = (n: number, decimalPlaces: number) => {
+  const factor = Math.pow(10, decimalPlaces);
+  return Math.ceil(n * factor) / factor;
+};
