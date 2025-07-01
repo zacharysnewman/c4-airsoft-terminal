@@ -61,7 +61,7 @@ const handleRawInput =
       }
       userInput = "";
     } else {
-      userInput += char.toUpperCase();
+      userInput += char?.toUpperCase() ?? "";
     }
     const newContent =
       gamemode.objectivePhases[currentObjectivePhase].message();
