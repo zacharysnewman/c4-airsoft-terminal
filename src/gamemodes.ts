@@ -5,7 +5,7 @@ import { generateRandomCode, getPercentage } from "./utils.js";
 export const dynamicDisplayRefreshRateMs = 100;
 
 const unguessable = "!@#$|";
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const letters = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
 const numbers = "0123456789";
 const alphanumeric = letters + numbers;
 const binary = "01";
@@ -26,11 +26,11 @@ export const getGamemodes = ({
 }: GameModeParams): GameModeConfig[] => [
   {
     gameModeName: "Nuclear Launch Sequence",
-    pregameTimeLimitSeconds: 10,
-    overallTimeLimitSeconds: 1 * 60,
+    pregameTimeLimitSeconds: 120,
+    overallTimeLimitSeconds: 1 * 900,
     objectiveTimeLimitSeconds: 0,
     objectiveStartProgress: 0,
-    codeCount: 10,
+    codeCount: 25,
     generatePositiveCode: generateRandomCode(4, alphanumeric),
     generateNegativeCode: () => unguessable,
     pregameTimerMessage: () =>
@@ -40,10 +40,10 @@ export const getGamemodes = ({
     start: {
       message: () =>
         [
-          `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+          `Time Remaining: ${getTimeManager().getTimeRemainingFormatted(
             overallTimerKey
           )}`,
-          "Initiate Nuclear ICBM Launch Sequence? ",
+          "Initiate Nuclear ICBM Launch Sequence?",
         ].join("\n"),
       audioPath: "audio/StartLaunch.mp3",
     },
@@ -51,27 +51,33 @@ export const getGamemodes = ({
       {
         message: () =>
           [
-            `Time remaining: ${getTimeManager().getTimeRemainingFormatted(
+            `Time Remaining: ${getTimeManager().getTimeRemainingFormatted(
               overallTimerKey
             )}`,
-            `Nuclear ICBM launch sequence initiated...`,
-            `Target acquired: Washington state`,
-            `Launch codes requested...`,
+            `Nuclear ICBM Launch Sequence Initiated...`,
+            `Acquiring Target...`,
+            `Target Location Acquired: Washington State`,
+            `Coordinates: 46.917963 -122.295920`,
             ``,
-            `Accepted codes: ${getAcceptedPositiveCodes().join(", ")}`,
-            `Sequence: ${getProgressBar(
+            `Codes Required.`,
+            `Full Launch Code: ${getAcceptedPositiveCodes().join(", ")}`,
+            ``,
+            `Launch Progress: ${getProgressBar(
               getCurrentProgressToObjective()
             )} ${getPercentage(getCurrentProgressToObjective())}`,
-            `Current launch code is ${getPositiveCode()}`,
-            `(${getLastCodeResult()}) Enter launch code: ${getUserInput()}`,
+            ``,
+            `Partial Launch Code: ${getPositiveCode()}`,
+            `Enter Partial Launch Code: ${getUserInput()}`,
+            `                (${getLastCodeResult()}) `,
           ].join("\n"),
         overallTimerEnds: {
           message: () =>
             [
-              "Time expired...",
-              "Launch sequence terminated...",
-              "Washington thanks you...",
-              "Defenders win!",
+              "Time To Launch Has Expired...",
+              "Launch Sequence Terminated...",
+              "Washington Thanks You For Your Valor...",
+              ``,
+              "Defenders WIN!",
               "\n",
             ].join("\n"),
           audioPath: "audio/FailureLaunch.mp3",
@@ -81,10 +87,11 @@ export const getGamemodes = ({
         objectiveReachesMax: {
           message: () =>
             [
-              "Launch codes accepted...",
-              "Nuclear ICBM launched...",
-              "Goodbye Washington and good luck...",
-              "Attackers win!",
+              "Launch Codes Accepted...",
+              "Nuclear ICBM Has Launched...",
+              "ETA To Your Location: 2 Minutes 57 Seconds",
+              "Goodbye. Your Sacrifice Will Be Remembered...",
+              "Attackers WIN!",
               "\n",
             ].join("\n"),
           audioPath: "audio/SuccessLaunch.mp3",
@@ -158,12 +165,12 @@ export const getGamemodes = ({
   {
     gameModeName: "Uplink",
     pregameTimeLimitSeconds: 0,
-    overallTimeLimitSeconds: 1 * 60,
+    overallTimeLimitSeconds: 1 * 600,
     objectiveTimeLimitSeconds: 0,
     objectiveStartProgress: 0.5,
-    codeCount: 4,
-    generatePositiveCode: generateRandomCode(2, binary),
-    generateNegativeCode: generateRandomCode(4, letters),
+    codeCount: 60,
+    generatePositiveCode: generateRandomCode(8, binary),
+    generateNegativeCode: generateRandomCode(8, letters),
     pregameTimerMessage: () =>
       `Pregame Timer: ${getTimeManager().getTimeRemainingFormatted(
         pregameTimerKey
@@ -187,23 +194,26 @@ export const getGamemodes = ({
             )}`,
             `HACKER codes entered: ${getAcceptedPositiveCodes().length}`,
             `SECURITY codes entered: ${getAcceptedNegativeCodes().length}`,
+            ``,
             `Uplink: ${getProgressBar(
               getCurrentProgressToObjective()
             )} ${getPercentage(getCurrentProgressToObjective())}`,
+            ``,
             `Current HACKER uplink code is ${getPositiveCode()}`,
             `Current SECURITY uplink code is ${getNegativeCode()}`,
+            ``,
             `(${getLastCodeResult()}) Enter YOUR uplink code: ${getUserInput()}`,
           ].join("\n"),
         overallTimerEnds: {
-          message: () => ["Hack expired!", "Security wins!"].join("\n"),
+          message: () => ["Hack Failed!", "Security Team WINS!"].join("\n"),
           audioPath: "",
         },
         objectiveReachesMin: {
-          message: () => ["Hack cancelled!", "Security win!"].join("\n"),
+          message: () => ["Hack Terminated!", "Security Team WINS!"].join("\n"),
           audioPath: "",
         },
         objectiveReachesMax: {
-          message: () => ["Hack complete!", "Hackers win!"].join("\n"),
+          message: () => ["Hack Successful!", "Hackers WIN!"].join("\n"),
           audioPath: "",
         },
       },

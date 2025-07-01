@@ -14,7 +14,7 @@ import {
   MessageWithAudio,
   GameModeConfig,
 } from "./src/types.js";
-import AudioPlayer from "./src/AudioPlayer.js";
+//import AudioPlayer from "./src/AudioPlayer.js";
 
 // Press "enter" this # times to access gamemode selection (after finishing a game)
 const pressToShowGamemodeSelectCount = 10;
@@ -144,7 +144,7 @@ async function runGamemode(gamemode: GameModeConfig) {
       1
     );
     await pause(1000);
-    AudioPlayer.play(gamemode.start.audioPath);
+    //AudioPlayer.play(gamemode.start.audioPath);
     await typingObjectiveDisplay;
 
     const displayIntervalId = terminalManager.displayDynamicContent(
@@ -197,7 +197,7 @@ async function runGamemode(gamemode: GameModeConfig) {
   // Game End
   const activelyTypingWinMessage = terminalManager.type(winMessage!.message);
   await pause(1000);
-  AudioPlayer.play(winMessage!.audioPath);
+  //AudioPlayer.play(winMessage!.audioPath);
   await activelyTypingWinMessage;
 
   for (let i = 0; i < pressToShowGamemodeSelectCount; i++) {
