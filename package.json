@@ -4,7 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "tsx app.ts"
+    "start": "tsx app.ts",
+    "audio-test": "tsx src/VLCPlayer.ts"
   },
   "keywords": [],
   "author": "",
